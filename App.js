@@ -10,9 +10,7 @@ import {
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
-import { Ionicons } from "@expo/vector-icons";
-import { FontAwesome5 } from "@expo/vector-icons";
-
+import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Screens
@@ -21,6 +19,7 @@ import AddExpenseScreen from "./screens/AddExpenseScreen";
 import AddIncomeScreen from "./screens/AddIncomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import PdfScreen from "./screens/PdfScreen";
+import ReportScreen from "./screens/ReportScreen"; // Ensure this import exists
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -42,7 +41,6 @@ function Tabs({ navigation }) {
       }
     };
 
-    // reload on focus
     const unsubscribe = navigation.addListener("focus", loadProfileAndBalance);
     loadProfileAndBalance();
 
@@ -52,17 +50,15 @@ function Tabs({ navigation }) {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerTitle: "💰 MoneyMate",
+        headerTitle: "",
         headerTitleAlign: "center",
         headerRight: () => (
           <View style={styles.headerRight}>
-            {/* Coins Display */}
             <View style={styles.balanceContainer}>
               <FontAwesome5 name="coins" size={20} color="#f1c40f" />
               <Text style={styles.balanceText}>{coins} Coins</Text>
             </View>
 
-            {/* Profile Icon */}
             <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
               <Image
                 source={
@@ -75,11 +71,17 @@ function Tabs({ navigation }) {
             </TouchableOpacity>
           </View>
         ),
+        headerLeft: () => (
+          <View style={styles.headerLeft}>
+            <Text style={styles.appTitle}>💰 MoneyMate</Text>
+          </View>
+        ),
         tabBarIcon: ({ color, size }) => {
           let iconName;
           if (route.name === "Home") iconName = "home";
           else if (route.name === "Add Expense") iconName = "remove-circle";
           else if (route.name === "Add Income") iconName = "add-circle";
+          else if (route.name === "Reports") iconName = "bar-chart";
           else if (route.name === "PDF") iconName = "document-text";
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -91,13 +93,14 @@ function Tabs({ navigation }) {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Add Expense" component={AddExpenseScreen} />
       <Tab.Screen name="Add Income" component={AddIncomeScreen} />
+      <Tab.Screen name="Reports" component={ReportScreen} />
       <Tab.Screen name="PDF" component={PdfScreen} />
     </Tab.Navigator>
   );
 }
 
-
 export default function App() {
+  // Logic for ads is removed from here
   return (
     <NavigationContainer>
       <Stack.Navigator>
@@ -146,5 +149,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: "#ccc",
+  },
+  headerLeft: {
+    marginLeft: 15,
+  },
+  appTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#2e86de",
   },
 });

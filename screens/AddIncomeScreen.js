@@ -43,7 +43,8 @@ export default function AddIncomeScreen() {
       id: Date.now().toString(),
       source,
       amount: parseFloat(amount),
-      date: date.toDateString(),
+      // --- IMPORTANT CHANGE HERE ---
+      date: date.toISOString().split("T")[0], // Save date as YYYY-MM-DD
     };
 
     const updated = [...incomes, newIncome];
@@ -52,16 +53,18 @@ export default function AddIncomeScreen() {
     try {
       await AsyncStorage.setItem("incomes", JSON.stringify(updated));
 
-      // also update balance
-      const currentBalance = await AsyncStorage.getItem("balance");
-      const newBalance =
-        (currentBalance ? parseFloat(currentBalance) : 0) +
-        parseFloat(amount);
-      await AsyncStorage.setItem("balance", newBalance.toString());
+      // also update balance - this can be removed if you consistently calculate from stored lists
+      // For this project, it's safer to calculate balance on the fly from lists.
+      // const currentBalance = await AsyncStorage.getItem("balance");
+      // const newBalance =
+      //   (currentBalance ? parseFloat(currentBalance) : 0) +
+      //   parseFloat(amount);
+      // await AsyncStorage.setItem("balance", newBalance.toString());
 
       // reset form
       setSource("");
       setAmount("");
+      setDate(new Date()); // Reset date picker to today
     } catch (error) {
       console.log("Error saving income:", error);
     }
@@ -71,7 +74,8 @@ export default function AddIncomeScreen() {
     <View style={styles.incomeItem}>
       <Text style={styles.incomeSource}>{item.source}</Text>
       <Text style={styles.incomeAmount}>+${item.amount.toFixed(2)}</Text>
-      <Text style={styles.incomeDate}>{item.date}</Text>
+      {/* Display date consistently */}
+      <Text style={styles.incomeDate}>{new Date(item.date).toLocaleDateString()}</Text>
     </View>
   );
 
@@ -100,7 +104,7 @@ export default function AddIncomeScreen() {
             style={styles.dateBtn}
             onPress={() => setShowDatePicker(true)}
           >
-            <Text style={styles.dateText}>Select Date: {date.toDateString()}</Text>
+            <Text style={styles.dateText}>Select Date: {date.toLocaleDateString()}</Text>
           </TouchableOpacity>
           {showDatePicker && (
             <DateTimePicker
@@ -122,7 +126,7 @@ export default function AddIncomeScreen() {
 
       <Text style={styles.listTitle}>My Incomes</Text>
       <FlatList
-        data={incomes}
+        data={incomes.slice().reverse()} // Show newest first
         keyExtractor={(item) => item.id}
         renderItem={renderIncome}
         ListEmptyComponent={<Text style={styles.empty}>No incomes yet</Text>}
@@ -163,9 +167,12 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  incomeSource: { fontSize: 16, fontWeight: "bold", color: "#2e86de" },
-  incomeAmount: { fontSize: 16, color: "green", marginTop: 5 },
-  incomeDate: { fontSize: 14, color: "gray", marginTop: 3 },
+  incomeSource: { fontSize: 16, fontWeight: "bold", color: "#2e86de", flex: 1 },
+  incomeAmount: { fontSize: 16, color: "green", fontWeight: 'bold', marginLeft: 10 },
+  incomeDate: { fontSize: 14, color: "gray", marginLeft: 10 },
   empty: { textAlign: "center", color: "gray", marginTop: 20 },
 });

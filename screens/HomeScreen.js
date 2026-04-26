@@ -19,25 +19,26 @@ const categoryStyles = {
 
 export default function HomeScreen({ navigation }) {
   const [expenses, setExpenses] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [income, setIncome] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0); // Changed to totalExpenses
+  const [totalIncome, setTotalIncome] = useState(0); // Added for total income
 
-  const loadExpenses = async () => {
+  const loadTransactions = async () => { // Renamed for clarity
     try {
-      const stored = await AsyncStorage.getItem("expenses");
-      const list = stored ? JSON.parse(stored) : [];
-      setExpenses(list);
-      setTotal(list.reduce((sum, e) => sum + e.amount, 0));
-        const storedIncome = await AsyncStorage.getItem("incomes");
-        const incomeList = storedIncome ? JSON.parse(storedIncome) : [];
-        setIncome(incomeList.reduce((sum, i) => sum + i.amount, 0));
+      const storedExpenses = await AsyncStorage.getItem("expenses");
+      const expenseList = storedExpenses ? JSON.parse(storedExpenses) : [];
+      setExpenses(expenseList);
+      setTotalExpenses(expenseList.reduce((sum, e) => sum + e.amount, 0));
+
+      const storedIncomes = await AsyncStorage.getItem("incomes");
+      const incomeList = storedIncomes ? JSON.parse(storedIncomes) : [];
+      setTotalIncome(incomeList.reduce((sum, i) => sum + i.amount, 0)); // Calculate total income
     } catch (e) {
       console.log("❌ Load error", e);
     }
   };
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", loadExpenses);
+    const unsubscribe = navigation.addListener("focus", loadTransactions); // Call loadTransactions
     return unsubscribe;
   }, [navigation]);
 
@@ -50,7 +51,7 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.date}>{item.date}</Text>
         </View>
-        <Text style={[styles.amount, { color: cat.color }]}>${item.amount}</Text>
+        <Text style={[styles.amount, { color: cat.color }]}>${item.amount.toFixed(2)}</Text>
       </View>
     );
   };
@@ -59,10 +60,20 @@ export default function HomeScreen({ navigation }) {
     <View style={styles.container}>
       {/* Summary */}
       <View style={styles.summary}>
-        <Text style={styles.summaryText}>💰 Total Spent:</Text>
-        <Text style={styles.summaryAmount}>${total.toFixed(2)}</Text>
-        <Text style={styles.summaryText}>📈 Total Income:</Text>
-        <Text style={styles.summaryAmount}>${income.toFixed(2)}</Text>
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryText}>💰 Total Spent:</Text>
+          <Text style={styles.summaryAmount}>${totalExpenses.toFixed(2)}</Text>
+        </View>
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryText}>📈 Total Income:</Text>
+          <Text style={styles.summaryAmount}>${totalIncome.toFixed(2)}</Text>
+        </View>
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryText}>📊 Net Balance:</Text>
+          <Text style={[styles.summaryAmount, { color: (totalIncome - totalExpenses) >= 0 ? '#d4edda' : '#f8d7da' }]}>
+            ${(totalIncome - totalExpenses).toFixed(2)}
+          </Text>
+        </View>
       </View>
 
       {/* Expenses List */}
@@ -70,7 +81,7 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.empty}>No expenses yet. Add one!</Text>
       ) : (
         <FlatList
-          data={expenses.reverse()} // newest first
+          data={expenses.slice().reverse()} // Use slice to avoid reversing original array
           keyExtractor={(item) => item.id}
           renderItem={renderExpense}
           contentContainerStyle={{ paddingBottom: 20 }}
@@ -94,13 +105,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#2e86de",
     margin: 10,
     borderRadius: 12,
-    padding: 20,
+    padding: 15,
     alignItems: "center",
-    flexDirection: "row",
+    flexDirection: "column", // Changed to column for better stacking of items
     justifyContent: "space-around",
   },
+  summaryItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '90%',
+    paddingVertical: 5,
+  },
   summaryText: { color: "#fff", fontSize: 16 },
-  summaryAmount: { color: "#fff", fontSize: 28, fontWeight: "bold" },
+  summaryAmount: { color: "#fff", fontSize: 24, fontWeight: "bold" }, // Reduced font size for better fit
 
   card: {
     flexDirection: "row",
